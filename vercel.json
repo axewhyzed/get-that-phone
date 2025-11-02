@@ -11,6 +11,5 @@
       "src": "/api/(?<path>.*)",
       "dest": "/api/$path"
     }
-  ],
-  "public": "docs"
+  ]
 }
