@@ -1,156 +1,191 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <title>Phone Details</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="style.css" rel="stylesheet" />
+    <meta charset="utf-8" />
+    <title>Phone Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="style.css" rel="stylesheet" />
 </head>
+
 <body>
-  <main class="page">
-    <header class="phone-header">
-      <div class="phone-title">
-        <h1 id="phoneName">Loading…</h1>
-        <div class="meta-line">
-          <span id="price" class="price"></span>
-          <span id="release" class="release"></span>
-        </div>
+    <main class="page">
+        <header class="phone-header">
+            <div class="phone-title">
+                <h1 id="phoneName">Loading…</h1>
+                <div class="meta-line">
+                    <span id="price" class="price"></span>
+                    <span id="release" class="release"></span>
+                </div>
+            </div>
+        </header>
+
+        <section class="phone-grid">
+            <!-- Compact top-left icon/gallery -->
+            <aside class="phone-aside" aria-label="images">
+                <div id="gallery" class="gallery"></div>
+            </aside>
+
+            <!-- Wide specs column -->
+            <section class="phone-specs">
+                <div id="specs" class="specs"></div>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = 'https://get-that-phone.vercel.app/api';
+        const params = new URLSearchParams(window.location.search);
+        const phoneId = params.get('id');
+        let images = [];
+        let currentIndex = 0;
+
+        // Safely add sizing params without creating a second "?"
+        const withParams = (url, query) => {
+            if (!url) return '';
+            return url.includes('?') ? `${url}&${query}` : `${url}?${query}`;
+        };
+
+        // Accept both the old array shape and the new { gallery: [...] } shape
+        function normalizeImages(raw) {
+            if (!raw) return [];
+            if (Array.isArray(raw)) {
+                return raw
+                    .filter(img => !img.image_type || img.image_type === 'gallery')
+                    .map(img => ({
+                        url: img.image_url || img.url,
+                        alt: img.alt_text || img.alt || ''
+                    }));
+            }
+            if (raw.gallery && Array.isArray(raw.gallery)) {
+                return raw.gallery.map(img => ({
+                    url: img.image_url || img.url,
+                    alt: img.alt_text || img.alt || ''
+                }));
+            }
+            return [];
+        }
+
+        async function loadPhone() {
+            try {
+                const res = await fetch(`${API_URL}/phone-detail?id=${encodeURIComponent(phoneId || '')}`);
+                const data = await res.json();
+
+                const meta = data.metadata || {};
+                document.getElementById('phoneName').textContent = meta['Phone Name'] || 'Phone';
+
+                const rawImages = data.images || data.gallery || null;
+                images = normalizeImages(rawImages).slice(0, 3);
+
+                displayImages();
+                displayMetadata(meta);
+                displaySpecs(data.specs || {});
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('phoneContent').style.display = 'grid';
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `<p class="error">Failed to load phone details</p>`;
+            }
+        }
+
+        function displayImages() {
+            const sliderImages = document.getElementById('sliderImages');
+            const thumbnails = document.getElementById('thumbnails');
+
+            if (!images.length) {
+                sliderImages.innerHTML = '<div class="no-image-big">📱</div>';
+                thumbnails.innerHTML = '';
+                return;
+            }
+
+            currentIndex = 0;
+
+            sliderImages.innerHTML = images.map((img, i) => `
+      <img src="${withParams(img.url, 'q=60&w=200&h=400&fit=contain')}" alt="${img.alt}"
+           class="slider-img ${i === 0 ? 'active' : ''}"
+           onclick="openModal('${img.url}')" loading="${i === 0 ? 'eager' : 'lazy'}">
+    `).join('');
+
+            thumbnails.innerHTML = images.map((img, i) => `
+      <img src="${withParams(img.url, 'q=50&w=80&h=150&fit=contain')}" alt="${img.alt}"
+           class="thumb ${i === 0 ? 'active' : ''}"
+           onclick="goToSlide(${i})" loading="lazy">
+    `).join('');
+
+            document.getElementById('prevBtn').onclick = () => navigate(-1);
+            document.getElementById('nextBtn').onclick = () => navigate(1);
+        }
+
+        function goToSlide(index) {
+            const sliders = document.querySelectorAll('.slider-img');
+            const thumbs = document.querySelectorAll('.thumb');
+            if (!sliders.length) return;
+            sliders[currentIndex].classList.remove('active');
+            if (thumbs.length) thumbs[currentIndex].classList.remove('active');
+            currentIndex = index;
+            sliders[currentIndex].classList.add('active');
+            if (thumbs.length) thumbs[currentIndex].classList.add('active');
+        }
+
+        function navigate(dir) {
+            if (!images.length) return;
+            goToSlide((currentIndex + dir + images.length) % images.length);
+        }
+
+        function displayMetadata(meta) {
+            document.getElementById('metadata').innerHTML = `
+      <div class="meta-item">
+        <span class="meta-label">Price</span>
+        <span class="meta-value">${meta['Price'] || 'N/A'}</span>
       </div>
-    </header>
+      <div class="meta-item">
+        <span class="meta-label">Release</span>
+        <span class="meta-value">${meta['Release Date'] || 'N/A'}</span>
+      </div>
+    `;
+        }
 
-    <section class="phone-grid">
-      <!-- Compact top-left icon/gallery -->
-      <aside class="phone-aside" aria-label="images">
-        <div id="gallery" class="gallery"></div>
-      </aside>
+        function displaySpecs(specs) {
+            const specsDiv = document.getElementById('specs');
+            let html = '';
+            for (const [category, items] of Object.entries(specs)) {
+                html += `<details class="spec-category" open>
+        <summary>${category}</summary>
+        <div class="spec-items">`;
+                for (const [key, value] of Object.entries(items)) {
+                    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        html += `<div class="spec-subcategory">
+            <div class="spec-subcategory-title">${key}</div>`;
+                        for (const [subKey, subVal] of Object.entries(value)) {
+                            html += `<div class="spec-row">
+              <span class="spec-key">${subKey}</span>
+              <span class="spec-val">${subVal}</span>
+            </div>`;
+                        }
+                        html += `</div>`;
+                    } else {
+                        html += `<div class="spec-row">
+            <span class="spec-key">${key}</span>
+            <span class="spec-val">${value}</span>
+          </div>`;
+                    }
+                }
+                html += `</div></details>`;
+            }
+            specsDiv.innerHTML = html || '<div class="specs-empty">No specs</div>';
+        }
 
-      <!-- Wide specs column -->
-      <section class="phone-specs">
-        <div id="specs" class="specs"></div>
-      </section>
-    </section>
-  </main>
+        function openModal(src) {
+            document.getElementById('imageModal').style.display = 'flex';
+            document.getElementById('modalImage').src = src;
+        }
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
 
-  <script>
-    // ---------- helpers ----------
-    const qs = (s, r = document) => r.querySelector(s);
-    const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
-    const text = (el, v) => { if (el && v) el.textContent = v; };
+        loadPhone();
+    </script>
 
-    function pushRow(lines, k, v) {
-      lines.push(
-        `<div class="spec-row">
-          <span class="spec-key">${k}</span>
-          <span class="spec-val">${v}</span>
-        </div>`
-      );
-    }
-
-    // One-level nested renderer: Category -> Subcategory (object) -> rows
-    function renderSpecs(specs) {
-      const root = qs('#specs');
-      const lines = [];
-
-      Object.entries(specs || {}).forEach(([category, items]) => {
-        if (!items || typeof items !== 'object' || !Object.keys(items).length) return;
-
-        lines.push(`<details class="spec-category" open>
-          <summary>${category}</summary>
-          <div class="spec-items">`);
-
-        Object.entries(items).forEach(([key, value]) => {
-          // Subcategory block (e.g., Primary/Secondary/Features or SIM 1/SIM 2/Other)
-          if (value && typeof value === 'object' && Object.keys(value).length) {
-            lines.push(`<div class="spec-subcategory">
-              <div class="spec-subcategory-title">${key}</div>`);
-
-            Object.entries(value).forEach(([k2, v2]) => {
-              if (v2 === null || v2 === undefined || v2 === '') return;
-              pushRow(lines, k2, v2);
-            });
-
-            lines.push(`</div>`);
-          } else if (value !== null && value !== undefined && value !== '') {
-            // Flat row
-            pushRow(lines, key, value);
-          }
-        });
-
-        lines.push(`</div></details>`);
-      });
-
-      root.innerHTML = lines.join('');
-    }
-
-    function renderImages(images, phoneName) {
-      const wrap = qs('#gallery');
-      wrap.innerHTML = '';
-
-      const gallery = (images || []).filter(i => i.image_type === 'gallery').slice(0, 3);
-      if (!gallery.length) return;
-
-      gallery.forEach((img, idx) => {
-        const url = img.image_url || img.url;
-        if (!url) return;
-        const alt = img.alt_text || img.alt || phoneName || 'Phone';
-        const div = document.createElement('div');
-        div.className = 'thumb';
-        div.innerHTML = `<img class="phone-thumb" src="${url}" alt="${alt}">`;
-        wrap.appendChild(div);
-      });
-    }
-
-    async function loadPhone() {
-      const params = new URLSearchParams(location.search);
-      const id = params.get('id');
-
-      let data = null;
-
-      // 1) global (pre-injected)
-      if (window.__PHONE__) {
-        data = window.__PHONE__;
-      }
-
-      // 2) API by id
-      if (!data && id) {
-        try {
-          const r = await fetch(`/api/phone?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
-          if (r.ok) data = await r.json();
-        } catch {}
-      }
-
-      // 3) local fallback
-      if (!data) {
-        try {
-          const r = await fetch('phoneData.json', { cache: 'no-store' });
-          if (r.ok) {
-            const specsOnly = await r.json();
-            data = { specs: specsOnly.specs, metadata: specsOnly.metadata, images: [] };
-          }
-        } catch {}
-      }
-
-      if (!data) {
-        text(qs('#phoneName'), 'Not found');
-        return;
-      }
-
-      // Expected shape:
-      // data: { id?, phone_id?, specs, metadata, images? }
-      const name = data.metadata?.['Phone Name'] || 'Phone';
-      const price = data.metadata?.Price || '';
-      const release = data.metadata?.['Release Date'] || '';
-
-      document.title = `${name} — Details`;
-      text(qs('#phoneName'), name);
-      text(qs('#price'), price);
-      text(qs('#release'), release ? `Release: ${release}` : '');
-
-      renderImages(data.images || [], name);
-      renderSpecs(data.specs || {});
-    }
-
-    loadPhone();
-  </script>
 </body>
+
 </html>
