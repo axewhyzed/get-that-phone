@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Details - Get That Phone</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header-small">
+            <a href="#" onclick="history.back(); return false;" class="back-link">← Back</a>
+            <h1 id="phoneName">Loading...</h1>
+        </header>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="phoneContent" class="phone-detail" style="display: none;">
+            <div class="image-section">
+                <div class="slider" id="slider">
+                    <button class="slider-btn prev" id="prevBtn">‹</button>
+                    <div id="sliderImages"></div>
+                    <button class="slider-btn next" id="nextBtn">›</button>
+                </div>
+                <div id="thumbnails" class="thumbnails"></div>
+            </div>
+
+            <div class="info-section">
+                <div id="metadata" class="metadata"></div>
+                <div id="specs" class="specs"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img id="modalImage" class="modal-img">
+    </div>
+
+    <script>
+        const API_URL = 'https://get-that-phone.vercel.app/api';
+        const params = new URLSearchParams(window.location.search);
+        const phoneId = params.get('id');
+        let images = [];
+        let currentIndex = 0;
+
+        async function loadPhone() {
+            try {
+                const res = await fetch(`${API_URL}/phone-detail?id=${phoneId}`);
+                const data = await res.json();
+                
+                document.getElementById('phoneName').textContent = data.metadata['Phone Name'] || 'Phone';
+                images = data.images.filter(img => img.image_type === 'gallery');
+                
+                displayImages();
+                displayMetadata(data.metadata);
+                displaySpecs(data.specs);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('phoneContent').style.display = 'grid';
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `<p class="error">Failed to load phone details</p>`;
+            }
+        }
+
+        function displayImages() {
+            const sliderImages = document.getElementById('sliderImages');
+            const thumbnails = document.getElementById('thumbnails');
+            
+            if (images.length === 0) {
+                sliderImages.innerHTML = '<div class="no-image-big">📱</div>';
+                return;
+            }
+
+            sliderImages.innerHTML = images.map((img, i) => `
+                <img src="${img.image_url}" alt="${img.alt_text}" 
+                     class="slider-img ${i === 0 ? 'active' : ''}" 
+                     onclick="openModal('${img.image_url}')" loading="${i === 0 ? 'eager' : 'lazy'}">
+            `).join('');
+
+            thumbnails.innerHTML = images.map((img, i) => `
+                <img src="${img.image_url}" alt="${img.alt_text}" 
+                     class="thumb ${i === 0 ? 'active' : ''}" 
+                     onclick="goToSlide(${i})" loading="lazy">
+            `).join('');
+
+            document.getElementById('prevBtn').onclick = () => navigate(-1);
+            document.getElementById('nextBtn').onclick = () => navigate(1);
+        }
+
+        function goToSlide(index) {
+            document.querySelectorAll('.slider-img')[currentIndex].classList.remove('active');
+            document.querySelectorAll('.thumb')[currentIndex].classList.remove('active');
+            currentIndex = index;
+            document.querySelectorAll('.slider-img')[currentIndex].classList.add('active');
+            document.querySelectorAll('.thumb')[currentIndex].classList.add('active');
+        }
+
+        function navigate(dir) {
+            goToSlide((currentIndex + dir + images.length) % images.length);
+        }
+
+        function displayMetadata(meta) {
+            document.getElementById('metadata').innerHTML = `
+                <div class="meta-item">
+                    <span class="meta-label">Price</span>
+                    <span class="meta-value">${meta['Price'] || 'N/A'}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Release</span>
+                    <span class="meta-value">${meta['Release Date'] || 'N/A'}</span>
+                </div>
+            `;
+        }
+
+        function displaySpecs(specs) {
+            const specsDiv = document.getElementById('specs');
+            specsDiv.innerHTML = Object.entries(specs).map(([cat, items]) => `
+                <details class="spec-category" open>
+                    <summary>${cat}</summary>
+                    <div class="spec-items">
+                        ${Object.entries(items).map(([key, val]) => `
+                            <div class="spec-row">
+                                <span class="spec-key">${key}</span>
+                                <span class="spec-val">${val}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </details>
+            `).join('');
+        }
+
+        function openModal(src) {
+            document.getElementById('imageModal').style.display = 'flex';
+            document.getElementById('modalImage').src = src;
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        loadPhone();
+    </script>
+</body>
+</html>

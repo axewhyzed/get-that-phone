@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phones - Get That Phone</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header-small">
+            <a href="index.html" class="back-link">← Back</a>
+            <h1 id="brandTitle">Loading...</h1>
+            <p id="phoneCount" class="subtitle">0 phones</p>
+        </header>
+
+        <div class="filters">
+            <input type="text" id="searchPhones" placeholder="Search phones..." class="search-input">
+            <select id="sortBy" class="sort-select">
+                <option value="name">Name</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+            </select>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="phonesGrid" class="phones-grid"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://get-that-phone.vercel.app/api';
+        const params = new URLSearchParams(window.location.search);
+        const brandId = params.get('id');
+        const brandName = params.get('name');
+        let allPhones = [];
+
+        document.getElementById('brandTitle').textContent = brandName;
+
+        async function loadPhones() {
+            try {
+                const res = await fetch(`${API_URL}/phones?brandId=${brandId}`);
+                allPhones = await res.json();
+                
+                document.getElementById('phoneCount').textContent = `${allPhones.length} phones`;
+                displayPhones(allPhones);
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `<p class="error">Failed to load phones</p>`;
+            }
+        }
+
+        function displayPhones(phones) {
+            const grid = document.getElementById('phonesGrid');
+            grid.innerHTML = phones.map(phone => `
+                <a href="phone.html?id=${phone.id}" class="phone-card">
+                    <div class="phone-image">
+                        ${phone.first_image ? 
+                            `<img src="${phone.first_image}" alt="${phone.name}" loading="lazy">` :
+                            '<div class="no-image">📱</div>'
+                        }
+                    </div>
+                    <div class="phone-info">
+                        <h3>${phone.name}</h3>
+                        <p class="price">${phone.price || 'N/A'}</p>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        function sortPhones(phones, type) {
+            const sorted = [...phones];
+            if (type === 'name') {
+                sorted.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (type === 'price-low' || type === 'price-high') {
+                sorted.sort((a, b) => {
+                    const priceA = parseInt((a.price || '0').replace(/[^0-9]/g, ''));
+                    const priceB = parseInt((b.price || '0').replace(/[^0-9]/g, ''));
+                    return type === 'price-low' ? priceA - priceB : priceB - priceA;
+                });
+            }
+            return sorted;
+        }
+
+        document.getElementById('searchPhones').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allPhones.filter(p => p.name.toLowerCase().includes(query));
+            displayPhones(sortPhones(filtered, document.getElementById('sortBy').value));
+        });
+
+        document.getElementById('sortBy').addEventListener('change', (e) => {
+            const query = document.getElementById('searchPhones').value.toLowerCase();
+            const filtered = allPhones.filter(p => p.name.toLowerCase().includes(query));
+            displayPhones(sortPhones(filtered, e.target.value));
+        });
+
+        loadPhones();
+    </script>
+</body>
+</html>

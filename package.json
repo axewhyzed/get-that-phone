@@ -1,0 +1,11 @@
+{
+  "name": "get-that-phone",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.78.0",
+    "cheerio": "^1.1.2",
+    "dotenv": "^17.2.3",
+    "node-fetch": "^3.3.2"
+  }
+}

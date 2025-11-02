@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get That Phone - Browse Phones</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>📱 Get That Phone</h1>
+            <p class="subtitle">Discover specs for 800+ smartphones</p>
+        </header>
+
+        <div class="search-wrapper">
+            <input type="text" id="searchBrands" placeholder="Search brands..." class="search-input">
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="brandsGrid" class="brands-grid"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://get-that-phone.vercel.app/api'; // ← Update after Vercel deployment
+
+        async function loadBrands() {
+            try {
+                const res = await fetch(`${API_URL}/brands`);
+                const brands = await res.json();
+                
+                const grid = document.getElementById('brandsGrid');
+                grid.innerHTML = brands.map(brand => `
+                    <a href="brand.html?id=${brand.id}&name=${encodeURIComponent(brand.display_name)}" class="brand-card">
+                        <div class="brand-icon">${brand.display_name.charAt(0)}</div>
+                        <h3>${brand.display_name}</h3>
+                        <p>${brand.phone_count} phones</p>
+                    </a>
+                `).join('');
+                
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `<p class="error">Failed to load brands</p>`;
+            }
+        }
+
+        document.getElementById('searchBrands').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.brand-card').forEach(card => {
+                card.style.display = card.textContent.toLowerCase().includes(query) ? 'flex' : 'none';
+            });
+        });
+
+        loadBrands();
+    </script>
+</body>
+</html>
