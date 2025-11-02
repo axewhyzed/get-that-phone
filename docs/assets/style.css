@@ -518,3 +518,157 @@ body {
     border-bottom: none;
 }
 
+/* ============== Phone detail layout overrides/additions ============== */
+
+/* Page structure */
+.page {
+  margin: 1rem auto;
+  padding: 0 1rem;
+  max-width: 1200px;
+}
+
+/* Header */
+.phone-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid #e9eef7;
+  padding-bottom: 0.5rem;
+}
+.phone-title h1 {
+  font-size: 1.4rem;
+  margin: 0 0 0.25rem 0;
+}
+.meta-line {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: #5f6b85;
+}
+.price { font-weight: 600; color: #1d2740; }
+.release { color: #6a7899; }
+
+/* Grid: small left column for icon, large right for specs */
+.phone-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1rem;
+}
+
+/* Narrow, sticky aside for small icon/gallery */
+.phone-aside {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+}
+.gallery {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr;
+}
+.thumb {
+  background: #f4f7ff;
+  border: 1px solid #e5ecfb;
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.phone-thumb {
+  width: 180px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* Main specs area */
+.phone-specs {
+  min-width: 0; /* prevent overflow */
+}
+
+/* Category blocks */
+.spec-category {
+  border: 1px solid #e9eef7;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.spec-category > summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: #1d2740;
+  background: #f7f9ff;
+  border-bottom: 1px solid #e9eef7;
+  list-style: none;
+}
+.spec-category[open] > summary { border-bottom-color: #e9eef7; }
+.spec-items { padding: 10px 12px; }
+
+/* Subcategory blocks (e.g., Primary/Secondary/Features, SIM 1/SIM 2/Other) */
+.spec-subcategory {
+  background: #fbfcff;
+  border-left: 4px solid #657bf3;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 8px 0;
+}
+.spec-subcategory-title {
+  font-weight: 700;
+  color: #364b8a;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+/* Key/Value rows */
+.spec-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dotted #e6ecfb;
+}
+.spec-row:last-child { border-bottom: none; }
+.spec-key {
+  color: #516189;
+  font-weight: 600;
+  word-break: break-word;
+}
+.spec-val {
+  color: #1d2740;
+  word-break: break-word;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .phone-grid {
+    grid-template-columns: 180px 1fr;
+  }
+  .spec-row {
+    grid-template-columns: 180px 1fr;
+  }
+  .phone-thumb { width: 150px; }
+}
+@media (max-width: 720px) {
+  .phone-grid {
+    grid-template-columns: 1fr;
+  }
+  .phone-aside {
+    position: relative;
+    top: auto;
+    order: -1;
+  }
+  .gallery {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .spec-row {
+    grid-template-columns: 140px 1fr;
+  }
+  .phone-thumb { width: 120px; }
+}
+
