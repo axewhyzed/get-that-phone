@@ -34,12 +34,11 @@
                 
                 const grid = document.getElementById('brandsGrid');
                 grid.innerHTML = brands.map(brand => `
-                    <a href="brand.html?id=${brand.id}&name=${encodeURIComponent(brand.display_name)}" class="brand-card">
-                        <div class="brand-icon">${brand.display_name.charAt(0)}</div>
-                        <h3>${brand.display_name}</h3>
-                        <p>${brand.phone_count} phones</p>
-                    </a>
-                `).join('');
+    		<a href="brand.html?id=${brand.id}&name=${encodeURIComponent(brand.display_name)}" class="brand-card">
+        		<div class="brand-name">${brand.display_name}</div>
+        		<div class="brand-count">${brand.phone_count} phones</div>
+    		</a>
+		`).join('');
                 
                 document.getElementById('loading').style.display = 'none';
             } catch (error) {

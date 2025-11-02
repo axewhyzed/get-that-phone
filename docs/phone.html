@@ -68,20 +68,22 @@
         function displayImages() {
             const sliderImages = document.getElementById('sliderImages');
             const thumbnails = document.getElementById('thumbnails');
-            
+
+            images = images.slice(0, 3);
+
             if (images.length === 0) {
                 sliderImages.innerHTML = '<div class="no-image-big">📱</div>';
                 return;
             }
 
             sliderImages.innerHTML = images.map((img, i) => `
-                <img src="${img.image_url}" alt="${img.alt_text}" 
+                <img src="${img.image_url}?q=70&w=400&h=800" alt="${img.alt_text}" 
                      class="slider-img ${i === 0 ? 'active' : ''}" 
                      onclick="openModal('${img.image_url}')" loading="${i === 0 ? 'eager' : 'lazy'}">
             `).join('');
 
             thumbnails.innerHTML = images.map((img, i) => `
-                <img src="${img.image_url}" alt="${img.alt_text}" 
+                <img src="${img.image_url}?q=70&w=100&h=200" alt="${img.alt_text}" 
                      class="thumb ${i === 0 ? 'active' : ''}" 
                      onclick="goToSlide(${i})" loading="lazy">
             `).join('');
