@@ -492,3 +492,29 @@ body {
         text-align: left;
     }
 }
+
+.spec-subcategory {
+    background: #f9f9f9;
+    border-left: 4px solid #667eea;
+    padding: 1rem;
+    margin: 0.75rem 0;
+    border-radius: 4px;
+}
+
+.spec-subcategory-title {
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.spec-subcategory .spec-row {
+    padding: 0.5rem 0;
+    border-bottom: 1px dotted #e0e0e0;
+    margin-left: 0;
+}
+
+.spec-subcategory .spec-row:last-child {
+    border-bottom: none;
+}
+

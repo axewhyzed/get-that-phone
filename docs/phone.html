@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phone Details - Get That Phone</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
     <div class="container">
         <header class="header-small">
@@ -50,14 +52,14 @@
             try {
                 const res = await fetch(`${API_URL}/phone-detail?id=${phoneId}`);
                 const data = await res.json();
-                
+
                 document.getElementById('phoneName').textContent = data.metadata['Phone Name'] || 'Phone';
                 images = data.images.filter(img => img.image_type === 'gallery');
-                
+
                 displayImages();
                 displayMetadata(data.metadata);
                 displaySpecs(data.specs);
-                
+
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('phoneContent').style.display = 'grid';
             } catch (error) {
@@ -119,20 +121,45 @@
 
         function displaySpecs(specs) {
             const specsDiv = document.getElementById('specs');
-            specsDiv.innerHTML = Object.entries(specs).map(([cat, items]) => `
-                <details class="spec-category" open>
-                    <summary>${cat}</summary>
-                    <div class="spec-items">
-                        ${Object.entries(items).map(([key, val]) => `
-                            <div class="spec-row">
-                                <span class="spec-key">${key}</span>
-                                <span class="spec-val">${val}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </details>
-            `).join('');
+
+            let html = '';
+
+            for (const [category, items] of Object.entries(specs)) {
+                html += `<details class="spec-category" open>
+            <summary>${category}</summary>
+            <div class="spec-items">`;
+
+                // ✅ NEW: Handle nested objects (cameras, SIMs, etc)
+                for (const [key, value] of Object.entries(items)) {
+
+                    // If value is an object, it's nested (cameras, SIM 1, SIM 2, etc)
+                    if (typeof value === 'object' && value !== null) {
+                        html += `<div class="spec-subcategory">
+                    <div class="spec-subcategory-title">${key}</div>`;
+
+                        for (const [subKey, subVal] of Object.entries(value)) {
+                            html += `<div class="spec-row">
+                        <span class="spec-key">${subKey}</span>
+                        <span class="spec-val">${subVal}</span>
+                    </div>`;
+                        }
+
+                        html += `</div>`;
+                    } else {
+                        // Regular spec row
+                        html += `<div class="spec-row">
+                    <span class="spec-key">${key}</span>
+                    <span class="spec-val">${value}</span>
+                </div>`;
+                    }
+                }
+
+                html += `</div></details>`;
+            }
+
+            specsDiv.innerHTML = html;
         }
+
 
         function openModal(src) {
             document.getElementById('imageModal').style.display = 'flex';
@@ -146,4 +173,5 @@
         loadPhone();
     </script>
 </body>
+
 </html>
